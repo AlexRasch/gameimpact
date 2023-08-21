@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Impact Calculator</title>
+    <meta name="author" content="Alex Rasch">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/colors.css">
+    <link rel="stylesheet" href="/assets/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Game Impact Calculator</h1>
+        <div class="row">
+            <div class="col">
+                <div class="form-floating mb-3">
+                    <input type="number" class="form-control" id="odds" step="0.01" min="0" max="100">
+                    <label for="odds">Event Probability (%):</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="number" class="form-control" id="events" min="1" max="100">
+                    <label for="events">Number of Events*:</label>
+                </div>
+ 
+                <div class="d-grid gap-2">
+                    <button onclick="calculateProbability()" class="btn btn-info">Calculate Probability</button>
+                </div>
+                <p id="result">Probability:</p>
+            </div>
+            <div class="col">
+                <div class="form-floating mb-3">
+                    <input type="number" class="form-control" id="speed" step="0.01" min="0">
+                    <label for="speed">Current cooldown (sec):</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="number" class="form-control" id="speedChange" step="0.01">
+                    <label for="speedChange">Cooldown Change (%):</label>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button onClick="calculateCooldown()" class="btn btn-info">Calculate cooldown change</button>
+                </div>
+                <p id="resultCoolDown">New cooldown:</p>
+            </div>
+        </div>
+
+        <table id="probabilityTable" class="table table-striped" border="1">
+            <tr>
+                <th>Number of Events</th>
+                <th>Chosen Odds (%)</th>
+                <th>Probability (%)</th>
+            </tr>
+        </table>
+        <p>Use this tool to explore how changes in the probability of an event occurring (0 - 100%) can impact your game outcomes.
+            Enter the probability of the event and the number of attempts to calculate the likelihood of the event happening.</p>
+        <p><strong>Note:</strong> This tool can help you analyze the effects of adjustments to event probabilities on your in-game
+            outcomes. For example, if you want to evaluate how an increased chance of landing critical strikes affects your game:</p>
+        <ul>
+            <li><strong>Event Probability:</strong> Enter the critical strike chance. You can use percentages from 0 to 100,
+                including negative values like -10 to represent a decrease in chance.</li>
+            <li><strong>Number of Events:</strong> Specify the number of events you're interested in. This could be the number of
+                auto attacks or any other in-game occurrences.</li>
+            <li><strong>Calculate Probability:</strong> Click this button to calculate the probability of the event happening.</li>
+            <li><strong>Calculate Cooldown Change:</strong> To explore the impact of increased or decreased attack speed, enter the
+                current cooldown time in seconds and the cooldown change as a percentage (positive for faster cooldown and negative
+                for slower cooldown). Click this button to see the new cooldown time.</li>
+        </ul>
+        <p><strong>Note:</strong> If you're calculating cooldown changes, the table will be cleared to focus on the new results.
+        </p>
+    </div>
+    <script>
+        function calculateProbability() {
+            var oddsPercentage = parseFloat(document.getElementById("odds").value);
+            var numberOfEvents = parseInt(document.getElementById("events").value);
+
+            if (!isValidInput(oddsPercentage, numberOfEvents)) {
+                return;
+            }
+
+            clearTable();
+
+            var odds = oddsPercentage / 100;
+            var probability = calculateEventProbability(odds, numberOfEvents);
+            displayResult(probability);
+
+            generateTableRows(oddsPercentage, odds, numberOfEvents);
+        }
+
+        function calculateCooldown() {
+            var attackSpeed = parseFloat(document.getElementById("speed").value);
+            var speedChange = parseFloat(document.getElementById("speedChange").value);
+
+            // ToDo input validation
+
+
+            var newAttackSpeed = calculateNewAttackSpeed(attackSpeed, speedChange);
+            displayNewCoolDown(newAttackSpeed);
+
+            clearTable();
+        }
+
+        function isValidInput(oddsPercentage, numberOfEvents) {
+            if (isNaN(oddsPercentage) || isNaN(numberOfEvents) || oddsPercentage < 0 || oddsPercentage > 100 || numberOfEvents < 1) {
+                document.getElementById("result").innerHTML = "Please enter valid values.";
+                return false;
+            }
+            return true;
+        }
+
+        /* Math functions */
+
+        function calculateNewAttackSpeed(currentSpeed, speedChange) {
+            return currentSpeed * (1 + speedChange / 100);
+        }
+
+        function calculateEventProbability(odds, numberOfEvents) {
+            return 1 - Math.pow(1 - odds, numberOfEvents);
+        }
+
+        /* Display functions */
+
+        function displayResult(probability) {
+            document.getElementById("result").innerHTML = "Probability: " + (probability * 100).toFixed(2) + "%";
+        }
+
+        function displayNewCoolDown(newAttackSpeed) {
+            document.getElementById("resultCoolDown").innerHTML = "New cooldown: " + newAttackSpeed.toFixed(2) + " sec";
+        }
+        /*  Table functions */
+
+        function generateTableRows(oddsPercentage, odds, numberOfEvents) {
+            var table = document.getElementById("probabilityTable");
+            var eventCounts = [1, 2, 3, 4, 5, 10, 15];
+
+            for (var i = 0; i < eventCounts.length; i++) {
+                var count = eventCounts[i];
+                var newRow = table.insertRow(-1);
+                var newCell1 = newRow.insertCell(0);
+                var newCell2 = newRow.insertCell(1);
+                var newCell3 = newRow.insertCell(2);
+
+                var eventProbability = calculateEventProbability(odds, count);
+                newCell1.innerHTML = count;
+                newCell2.innerHTML = oddsPercentage + "%";
+                newCell3.innerHTML = (eventProbability * 100).toFixed(2) + "%";
+            }
+        }
+
+        function clearTable() {
+            var table = document.getElementById("probabilityTable");
+            var rowCount = table.rows.length;
+            for (var i = rowCount - 1; i > 0; i--) {
+                table.deleteRow(i);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
