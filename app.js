@@ -1,5 +1,6 @@
 import changeDynamicWord from "./js/gui.js";
 import { calculateNewCooldown } from "./js/cooldown.js";
+import { getQueryParam } from "./js/queryHandler.js";
 
 
 // GUI elem
@@ -7,9 +8,12 @@ const btnItemDrop = document.getElementById('btnItemDrop');
 const btnCoolDown = document.getElementById('btnCoolDown');
 
 // Entry Point
-document.addEventListener("DOMContentLoaded", function(event) {
+document.addEventListener("DOMContentLoaded", function (event) {
 
     changeDynamicWord();
+    const calcType = getQueryParam("calc");
+    console.log(calcType);
+    handleQuery(calcType);
 
 });
 
@@ -22,8 +26,29 @@ btnCoolDown.addEventListener('click', () => {
     calculateCooldown();
 })
 
-function calculateItemDrop() {
-    var itemDropRate = parseFloat(document.getElementById("oddsItemDrop").value) / 100;
+// Handle query
+function handleQuery(query) {
+    if (query === "itemdrop") {
+        const odds = parseFloat(getQueryParam("odds"));
+        handleQueryItemDrop(odds);
+    }
+}
+
+function handleQueryItemDrop(odds) {
+    calculateItemDrop(odds);
+}
+
+
+function calculateItemDrop(odds = 0) {
+    var itemDropRate;
+
+    if (odds != 0) {
+        itemDropRate = odds / 100;
+        console.log(odds);
+    } else {
+        itemDropRate = parseFloat(document.getElementById("oddsItemDrop").value) / 100;
+    }
+
     const numberOfEvents = calculateAttemptsForCertainty(itemDropRate);
     displayItemDrop(numberOfEvents);
 }
@@ -67,11 +92,11 @@ function isValidInput(oddsPercentage, numberOfEvents) {
 
 /* Math functions */
 
-function calculateAttemptsForCertainty(chance) {  
+function calculateAttemptsForCertainty(chance) {
     // Calculate the number of attempts needed for 99% certainty
     const attempts = Math.ceil(Math.log(1 - 0.99) / Math.log(1 - chance));
     return attempts;
-  }
+}
 
 function calculateEventProbability(odds, numberOfEvents) {
     return 1 - Math.pow(1 - odds, numberOfEvents);
@@ -83,7 +108,7 @@ function calculateEventProbability(odds, numberOfEvents) {
 
 function displayItemDrop(itemDrop) {
     let message = "";
-    
+
     if (itemDrop < 10) {
         message = "You're almost there! Just a few more monster slayings or dungeon runs, around " + itemDrop + " times, and that epic item will be yours!";
     } else if (itemDrop < 50) {
